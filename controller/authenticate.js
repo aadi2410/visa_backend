@@ -173,8 +173,10 @@ router.get("/getProfile/:user_id", auth, async (req, response) => {
 });
 router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async (req, res) => {
   try {
-    let updatedUserData = { firstName: req.body.firstName, profilePicture: req.file?.path };
-  
+    const url = req.protocol + '://' + req.get('host')
+    
+    let updatedUserData = { firstName: req.body.firstName, profilePicture: url + '/public/' + req.file?.filename};
+
     const updatedUser = await User.findOneAndUpdate({ _id: req.params.user_id }, updatedUserData, { new: true });
   console.log(updatedUser)
     if (!updatedUser) {
