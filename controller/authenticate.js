@@ -6,9 +6,49 @@ const router = express.Router();
 const dbConnect = require("../db/dbConnect");
 const User = require("../models/userModel");
 const auth = require("../utils/auth");
+const upload = require("../utils/multer");
 
 // execute database connection
 dbConnect();
+// const destination = (req, file, cb) => {
+//   switch (file.mimetype) {
+//        case 'image/jpeg':
+//             cb(null, './images/');
+//             break;
+//        case 'image/png':
+//             cb(null, './images/');
+//             break;
+//        case 'application/pdf':
+//             cb(null, './whitePaper/');
+//             break;
+//        default:
+//             cb('invalid file');
+//             break;
+//   }
+// }
+
+// const storage = multer.diskStorage({
+//   destination: destination,
+//   filename: (req, file, cb) => {
+//        return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
+//   }
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'application/pdf') {
+//        cb(null, true)
+//   } else {
+//        cb(null, false)
+//   }
+// };
+
+// const upload = multer({
+//   storage: storage,
+//   limits: {
+//        fileSize: 1024 * 1024 * 5,
+//   },
+//   fileFilter: fileFilter
+// });
 
 // register endpoint
 router.post("/register", (request, response) => {
@@ -19,10 +59,10 @@ router.post("/register", (request, response) => {
     .then((hashedPassword) => {
       // create a new user instance and collect the data
       const user = new User({
-        full_name:request.body.full_name,
+        full_name: request.body.full_name,
         email: request.body.email,
         password: hashedPassword,
-        mobile_no:request.body.mobile_no,
+        mobile_no: request.body.mobile_no,
       });
       // save the new user
       user
@@ -44,7 +84,7 @@ router.post("/register", (request, response) => {
     })
     // catch error if the password hash isn't successful
     .catch((e) => {
-        console.log(e)
+      console.log(e)
       response.status(500).send({
         message: "Password was not hashed successfully",
         e,
@@ -67,7 +107,7 @@ router.post("/login", (request, response) => {
         .then((passwordCheck) => {
 
           // check if password matches
-          if(!passwordCheck) {
+          if (!passwordCheck) {
             return response.status(400).send({
               message: "Passwords does not match",
               error,
@@ -89,6 +129,7 @@ router.post("/login", (request, response) => {
             message: "Login Successful",
             email: user.email,
             token,
+            userId: user._id
           });
         })
         // catch error if password do not match
@@ -116,6 +157,37 @@ router.get("/free-endpoint", (request, response) => {
 // authentication endpoint
 router.get("/auth-endpoint", auth, (request, response) => {
   response.send({ message: "You are authorized to access me" });
+});
+
+//get profile data
+router.get("/getProfile/:user_id", auth, async (req, response) => {
+  const user = await User.findOne({
+    _id: req.params.user_id,
+  });
+  if (user) {
+    response.status(200).send({
+      user
+    });
+  }
+
+});
+router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async (req, res) => {
+  try {
+    let updatedUserData = { firstName: req.body.firstName, profilePicture: req.file?.path };
+  
+    const updatedUser = await User.findOneAndUpdate({ _id: req.params.user_id }, updatedUserData, { new: true });
+  console.log(updatedUser)
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+  
+    const { password, ...rest } = updatedUser.toObject();
+    console.log(rest)
+    res.status(200).json({ message: 'User updated successfully', user: rest });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 module.exports = router;

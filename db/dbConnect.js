@@ -12,6 +12,8 @@ async function dbConnect() {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useCreateIndex: true,
+        useFindAndModify: false // Add this option to disable the deprecated findOneAndUpdate()
+
       }
     )
     .then(() => {
