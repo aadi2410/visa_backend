@@ -4,13 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon src/index.ts",
+    "start": "nodemon index.js",
     "build": "rimraf dist && tsc",
     "ts.check": "tsc --project tsconfig.json",
     "add-build": "git add dist",
     "test": "echo \"Error: no test specified\" && exit 1"
-    },
-  
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -20,7 +19,8 @@
     "express": "^4.17.1",
     "heroku": "^7.46.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.10.5"
+    "mongoose": "^5.10.5",
+    "pre-commit": "^1.2.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.2"
@@ -29,5 +29,5 @@
     "ts.check",
     "build",
     "add-build"
-]
+  ]
 }
