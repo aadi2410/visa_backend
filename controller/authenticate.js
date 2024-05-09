@@ -173,19 +173,27 @@ router.get("/getProfile/:user_id", auth, async (req, response) => {
 });
 router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async (req, res) => {
   try {
-    const url = req.protocol + '://' + req.get('host')
-    
-    let updatedUserData = { firstName: req.body.firstName, profilePicture: url + '/public/' + req.file?.filename};
+    const url = req.protocol + '://' + req.get('host');
+    let updatedUserData = { firstName: req.body.firstName, 
+      lastName:req.body.lastName,
+      email:req.body.email,
+      mobile_no:req.body.mobile_no,
+      passport:req.body.passport,
+      country:req.body.country,
+      pinCode:req.body.pinCode,
+      temporaryAddress:req.body.temporaryAddress,
+      presentAddress:req.body.presentAddress,
+      profilePicture: url + '/public/' + req.file?.filename,
+      profileFileName:req.file.originalname
+    };
 
     const updatedUser = await User.findOneAndUpdate({ _id: req.params.user_id }, updatedUserData, { new: true });
-  console.log(updatedUser)
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
     }
   
     const { password, ...rest } = updatedUser.toObject();
-    console.log(rest)
-    res.status(200).json({ message: 'User updated successfully', user: rest });
+    res.status(200).json({ message: 'User updated successfully', user: {...rest,fileName:req.file?.originalname} });
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ message: 'Internal server error' });
