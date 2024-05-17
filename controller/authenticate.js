@@ -7,50 +7,11 @@ const dbConnect = require("../db/dbConnect");
 const User = require("../models/userModel");
 const auth = require("../utils/auth");
 const upload = require("../utils/multer");
-
+const Admin = require("../models/adminModel");
+const Document=require('../models/documentUploadModel')
 // execute database connection
 dbConnect();
-// const destination = (req, file, cb) => {
-//   switch (file.mimetype) {
-//        case 'image/jpeg':
-//             cb(null, './images/');
-//             break;
-//        case 'image/png':
-//             cb(null, './images/');
-//             break;
-//        case 'application/pdf':
-//             cb(null, './whitePaper/');
-//             break;
-//        default:
-//             cb('invalid file');
-//             break;
-//   }
-// }
-
-// const storage = multer.diskStorage({
-//   destination: destination,
-//   filename: (req, file, cb) => {
-//        return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
-//   }
-// });
-
-// const fileFilter = (req, file, cb) => {
-//   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'application/pdf') {
-//        cb(null, true)
-//   } else {
-//        cb(null, false)
-//   }
-// };
-
-// const upload = multer({
-//   storage: storage,
-//   limits: {
-//        fileSize: 1024 * 1024 * 5,
-//   },
-//   fileFilter: fileFilter
-// });
-
-// register endpoint
+//register User
 router.post("/register", (request, response) => {
   // hash the password
 
@@ -58,29 +19,40 @@ router.post("/register", (request, response) => {
     .hash(request.body.password, 10)
     .then((hashedPassword) => {
       // create a new user instance and collect the data
-      const user = new User({
-        full_name: request.body.full_name,
-        email: request.body.email,
-        password: hashedPassword,
-        mobile_no: request.body.mobile_no,
-      });
-      // save the new user
-      user
-        .save()
-        // return success if the new user is added to the database successfully
-        .then((result) => {
-          response.status(201).send({
-            message: "User Created Successfully",
-            result,
-          });
-        })
-        // catch erroe if the new user wasn't added successfully to the database
-        .catch((error) => {
-          response.status(500).send({
-            message: "Error creating user",
-            error,
-          });
+      let data ={};
+      console.log(request.body)
+      if(request.body.type==="user"){
+        data=new User({
+          full_name: request.body.full_name,
+          email: request.body.email,
+          password: hashedPassword,
+          mobile_no: request.body.mobile_no,
         });
+      }else{
+        data=new Admin({
+          full_name: request.body.full_name,
+          email: request.body.email,
+          password: hashedPassword,
+          mobile_no: request.body.mobile_no,
+        });
+      }
+      data
+      .save()
+      // return success if the new user is added to the database successfully
+      .then((result) => {
+        response.status(201).send({
+          message: "User Created Successfully",
+          result,
+        });
+      })
+      // catch erroe if the new user wasn't added successfully to the database
+      .catch((error) => {
+        console.log({error})
+        response.status(500).send({
+          message: "Error creating user",
+          error,
+        });
+      });
     })
     // catch error if the password hash isn't successful
     .catch((e) => {
@@ -94,8 +66,15 @@ router.post("/register", (request, response) => {
 
 // login endpoint
 router.post("/login", (request, response) => {
+  let data;
+  console.log(request.body.type,"request.body.typerequest.body.type")
+  if(request.body.type==="user"){
+    data=User;
+  }else{
+    data=Admin
+  }
   // check if email exists
-  User.findOne({ email: request.body.email })
+  data.findOne({ email: request.body.email })
 
     // if email exists
     .then((user) => {
@@ -200,4 +179,62 @@ router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async 
   }
 });
 
+//Admin Document
+router.post("/singleVisaUpload/:user_id", auth, upload.array('uploadedImages', 3), async (req, res) => {
+  try {
+    const url = req.protocol + '://' + req.get('host');
+    var file = req.files;
+
+    let updatedUserData = {
+      
+    };
+    let arr=['singleVisaApplyDocument','singleVisaApplyAdharFront','singleVisaApplyAdharBack']
+    file.forEach((i,idx)=>{
+      updatedUserData[arr[idx]]=url + '/public/' + i?.filename;
+
+    })
+     const document = new Document({
+      user_id: req.params.user_id,
+       ...updatedUserData
+      });
+      document
+      .save()
+      // return success if the new user is added to the database successfully
+      .then((result) => {
+        res.status(201).send({
+          message: "Document Updated Successfully",
+          result,
+        });
+      })
+      // catch erroe if the new user wasn't added successfully to the database
+      .catch((error) => {
+        res.status(500).send({
+          message: "Error creating user",
+          error,
+        });
+      });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+router.get("/singleVisaUpload/:user_id", auth,  async (req, res) => {
+  try {
+    
+    const user = await Document.findOne({
+      user_id: req.query.user_id,
+    });
+    if (user) {
+      res.status(200).send({
+        user
+      });
+    }
+    res.status(401).send({
+      message:"Document Not Found"
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 module.exports = router;
