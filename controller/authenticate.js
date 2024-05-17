@@ -160,10 +160,12 @@ router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async 
       pinCode:req.body.pinCode,
       temporaryAddress:req.body.temporaryAddress,
       presentAddress:req.body.presentAddress,
-      profilePicture: url + '/public/' + req.file?.filename,
-      profileFileName:req.file.originalname
+      
     };
-
+if(req.file?.filename){
+  updatedUserData.profilePicture= url + '/public/' + req.file?.filename,
+  updatedUserData.profileFileName=req?.file?.originalname
+}
     const updatedUser = await User.findOneAndUpdate({ _id: req.params.user_id }, updatedUserData, { new: true });
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
