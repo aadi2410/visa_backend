@@ -8,7 +8,7 @@ const DocumentSchema = new mongoose.Schema({
     required: [true, "Please provide a user id!"]
   },
   
-  singleVisaApplyForm:{
+  singleVisaApplyDocument:{
     type: String,
     default: ""
   },

@@ -189,7 +189,7 @@ console.log(user);
     });
   }
 });
-router.post("/singleVisaUpload/:user_id", auth, upload.array('uploadedImages', 3), async (req, res) => {
+router.post("/singleVisaUpload/:user_id", auth,upload.fields([{ name: 'singleVisaApplyAdharFront' }, { name: 'singleVisaApplyAdharBack' },{name:"singleVisaApplyDocument"}]), async (req, res) => {
   try {
     const url = req.protocol + '://' + req.get('host');
     var file = req.files;
@@ -197,11 +197,24 @@ router.post("/singleVisaUpload/:user_id", auth, upload.array('uploadedImages', 3
     let updatedUserData = {
       
     };
-    let arr=['singleVisaApplyDocument','singleVisaApplyAdharFront','singleVisaApplyAdharBack']
-    file.forEach((i,idx)=>{
-      updatedUserData[arr[idx]]=url + '/public/' + i?.filename;
+    // file.forEach((i,idx)=>{
+    //   updatedUserData[arr[idx]]=url + '/public/' + i?.filename;
 
-    })
+    // })
+    console.log(file);
+    if(file?.singleVisaApplyAdharFront){
+
+      updatedUserData['singleVisaApplyAdharFront']=url + '/public/' + file?.singleVisaApplyAdharFront[0]?.filename;
+    }
+    if(file?.singleVisaApplyDocument){
+
+      updatedUserData['singleVisaApplyDocument']=url + '/public/' + file?.singleVisaApplyDocument[0]?.filename;
+    }
+    if(file?.singleVisaApplyAdharBack){
+
+      updatedUserData['singleVisaApplyAdharBack']=url + '/public/' + file?.singleVisaApplyAdharBack[0]?.filename;
+    }
+
      const document = new Document({
       user_id: req.params.user_id,
        ...updatedUserData
@@ -232,7 +245,30 @@ router.get("/singleVisaUpload/:user_id", auth,  async (req, res) => {
     const user = await Document.findOne({
       user_id: req.query.user_id,
     });
-  
+  console.log({user},req.query.user_id)
+    if (user) {
+     
+      res.status(200).send({document:user})
+    }else{
+
+      res.status(404).send({
+        message:"Document Not Found"
+      });
+    }
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+//for user
+router.get("/singleVisaUploadUser/:user_id", auth,  async (req, res) => {
+  try {
+    const user = await Document.findOne({
+      user_id: req.params.user_id
+    });
+
+  console.log({user })
     if (user) {
      
       res.status(200).send({document:user})
