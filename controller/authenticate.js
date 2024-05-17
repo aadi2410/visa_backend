@@ -47,7 +47,6 @@ router.post("/register", (request, response) => {
       })
       // catch erroe if the new user wasn't added successfully to the database
       .catch((error) => {
-        console.log({error})
         response.status(500).send({
           message: "Error creating user",
           error,
@@ -56,7 +55,6 @@ router.post("/register", (request, response) => {
     })
     // catch error if the password hash isn't successful
     .catch((e) => {
-      console.log(e)
       response.status(500).send({
         message: "Password was not hashed successfully",
         e,
@@ -108,7 +106,8 @@ router.post("/login", (request, response) => {
             message: "Login Successful",
             email: user.email,
             token,
-            userId: user._id
+            userId: user._id,
+          type:request.body.type
           });
         })
         // catch error if password do not match
@@ -148,7 +147,6 @@ router.get("/getProfile/:user_id", auth, async (req, response) => {
       user
     });
   }
-
 });
 router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async (req, res) => {
   try {
@@ -180,6 +178,17 @@ router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async 
 });
 
 //Admin Document
+router.get("/getUsers/:user_id", auth, async (req, response) => {
+  var user = await User.find({});
+
+console.log(user);
+
+  if (user) {
+    response.status(200).send({
+      user
+    });
+  }
+});
 router.post("/singleVisaUpload/:user_id", auth, upload.array('uploadedImages', 3), async (req, res) => {
   try {
     const url = req.protocol + '://' + req.get('host');
@@ -220,18 +229,19 @@ router.post("/singleVisaUpload/:user_id", auth, upload.array('uploadedImages', 3
 });
 router.get("/singleVisaUpload/:user_id", auth,  async (req, res) => {
   try {
-    
     const user = await Document.findOne({
       user_id: req.query.user_id,
     });
+  
     if (user) {
-      res.status(200).send({
-        user
+     
+      res.status(200).send({document:user})
+    }else{
+
+      res.status(404).send({
+        message:"Document Not Found"
       });
     }
-    res.status(401).send({
-      message:"Document Not Found"
-    });
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({ message: 'Internal server error' });
