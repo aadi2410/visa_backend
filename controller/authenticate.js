@@ -17,10 +17,33 @@ router.post("/register", (request, response) => {
 
   bcrypt
     .hash(request.body.password, 10)
-    .then((hashedPassword) => {
+    .then(async (hashedPassword) => {
       // create a new user instance and collect the data
       let data ={};
-      console.log(request.body)
+      let userType;
+      if(request.body.type==="user"){
+        userType=User;
+        const existingUser = await Admin.findOne({ email:request.body.email });
+      if (existingUser) {
+        return response.status(409).send({
+          message:  `Admin with this email already exists`
+        });
+      }
+      }else{
+        userType=Admin;
+        const existingUser = await User.findOne({ email:request.body.email });
+        if (existingUser) {
+          return response.status(409).send({
+            message:  `User with this email already exists`
+          });
+        }
+      }
+      const existingUser = await userType.findOne({ email:request.body.email });
+      if (existingUser) {
+        return response.status(409).send({
+          message:  `${request.body.type} with this email already exists`
+        });
+      }
       if(request.body.type==="user"){
         data=new User({
           full_name: request.body.full_name,
@@ -36,6 +59,7 @@ router.post("/register", (request, response) => {
           mobile_no: request.body.mobile_no,
         });
       }
+    
       data
       .save()
       // return success if the new user is added to the database successfully
@@ -65,7 +89,6 @@ router.post("/register", (request, response) => {
 // login endpoint
 router.post("/login", (request, response) => {
   let data;
-  console.log(request.body.type,"request.body.typerequest.body.type")
   if(request.body.type==="user"){
     data=User;
   }else{
@@ -127,16 +150,6 @@ router.post("/login", (request, response) => {
     });
 });
 
-// free endpoint
-router.get("/free-endpoint", (request, response) => {
-  response.json({ message: "You are free to access me anytime" });
-});
-
-// authentication endpoint
-router.get("/auth-endpoint", auth, (request, response) => {
-  response.send({ message: "You are authorized to access me" });
-});
-
 //get profile data
 router.get("/getProfile/:user_id", auth, async (req, response) => {
   const user = await User.findOne({
@@ -179,17 +192,20 @@ if(req.file?.filename){
   }
 });
 
-//Admin Document
+//on Admin page collecting All User
 router.get("/getUsers/:user_id", auth, async (req, response) => {
-  var user = await User.find({});
-
-console.log(user);
-
-  if (user) {
-    response.status(200).send({
-      user
-    });
+  try{
+    var user = await User.find({});
+    if (user) {
+      response.status(200).send({
+        user
+      });
+    }
+  }catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
+  
 });
 router.post("/singleVisaUpload/:user_id", auth,upload.fields([{ name: 'singleVisaApplyAdharFront' }, { name: 'singleVisaApplyAdharBack' },{name:"singleVisaApplyDocument"}]), async (req, res) => {
   try {
@@ -199,11 +215,6 @@ router.post("/singleVisaUpload/:user_id", auth,upload.fields([{ name: 'singleVis
     let updatedUserData = {
       
     };
-    // file.forEach((i,idx)=>{
-    //   updatedUserData[arr[idx]]=url + '/public/' + i?.filename;
-
-    // })
-    console.log(file);
     if(file?.singleVisaApplyAdharFront){
 
       updatedUserData['singleVisaApplyAdharFront']=url + '/public/' + file?.singleVisaApplyAdharFront[0]?.filename;
@@ -242,6 +253,30 @@ router.post("/singleVisaUpload/:user_id", auth,upload.fields([{ name: 'singleVis
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+router.put("/documentVerify/:user_id", auth, async (req, res) => {
+  try {
+    const { isVerified ,reason} = req.body;
+    const result = await Document.updateOne(
+      { user_id: req.query.user_id },
+      { $set: { isVerified,reason } }
+    );
+    const user = await User.updateOne(
+      { _id: req.query.user_id },
+      { $set: { isVerified,reason } }
+    );
+    if (result.nModified === 0&&user.nModified === 0) {
+      return res.status(404).send({
+        message: "Document not found or no changes made"
+      });
+    }
+    res.status(200).send({
+      message: "Document Updated Successfully"
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 router.get("/singleVisaUpload/:user_id", auth,  async (req, res) => {
   try {
     const user = await Document.findOne({
@@ -263,7 +298,7 @@ router.get("/singleVisaUpload/:user_id", auth,  async (req, res) => {
   }
 });
 
-//for user
+//for user getting uploaded document
 router.get("/singleVisaUploadUser/:user_id", auth,  async (req, res) => {
   try {
     const user = await Document.findOne({

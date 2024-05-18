@@ -72,7 +72,15 @@ const UserSchema = new mongoose.Schema({
   profileFileName:{
     type: String,
     default: ""
-  }
+  },
+  isVerified:{
+    type: Boolean,
+    default: false
+  },
+  reason:{
+    type: String,
+    default: ""
+  },
 
 });
 

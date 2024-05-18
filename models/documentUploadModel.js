@@ -20,6 +20,14 @@ const DocumentSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  isVerified:{
+    type: Boolean,
+    default: false
+  },
+  reason:{
+    type: String,
+    default: ""
+  },
 });
 
 // Export the Document model
