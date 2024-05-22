@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 
 // DocumentSchema schema
+const ArrayDataSchema = new mongoose.Schema({
+  groupVisaApplyAdharFront: String,
+  groupVisaApplyAdharBack: String,
+  groupVisaApplyDocument: String
+});
+
 const DocumentSchema = new mongoose.Schema({
   // user field
   user_id: {
@@ -28,6 +34,12 @@ const DocumentSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  arrayData: [
+    {type: Object,
+    default: {}
+}
+]
+
 });
 
 // Export the Document model

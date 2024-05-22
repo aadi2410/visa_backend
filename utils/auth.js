@@ -26,6 +26,7 @@ module.exports = async (request, response, next) => {
     }else{
       type=User
     }
+    console.log(type,"========================typ",request.query.type,request.query.type==="admin")
     if (!requestUserId) {
       return response.status(400).json({ error: "User ID missing in request parameters!" });
     }
