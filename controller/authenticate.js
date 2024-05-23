@@ -388,7 +388,7 @@ router.post("/groupVisaUpload/:user_id", auth, handleFiles, async (req, res) => 
 router.get("/groupVisaUpload/:user_id", auth, async (req, res) => {
   try {
     const user = await Document.findOne({
-      user_id: req.params.user_id ?? req.query.user_id,
+      user_id: req.query.user_id??req.params.user_id ,
     });
     if (user) {
 
@@ -431,9 +431,8 @@ router.put("/documentVerify/:user_id", auth, async (req, res) => {
 router.get("/singleVisaUpload/:user_id", auth, async (req, res) => {
   try {
     const user = await Document.findOne({
-      user_id: req.params.user_id ?? req.query.user_id,
+      user_id: req.query.user_id ?? req.params.user_id,
     });
-
     if (user) {
 
       res.status(200).send({ document: user })
