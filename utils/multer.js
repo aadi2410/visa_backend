@@ -2,7 +2,6 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 let path = require('path');
 const DIR = './public/';
-
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
         cb(null, DIR);
@@ -23,5 +22,5 @@ const fileFilter = (req, file, cb) => {
     }
 }
 
-let upload = multer({ storage, fileFilter });
+let upload = multer({ storage:process.env.NODE_ENV==="development"?storage:multer.diskStorage({}), fileFilter });
 module.exports=upload
