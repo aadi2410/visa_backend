@@ -186,11 +186,11 @@ router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async 
     if (req.file?.filename) {
 
       const data = await uploadToCloudinary(req.file.path, "profilePicture");
-      console.log({data})
-      updatedUserData.imageUrl= data.url,
-      updatedUserData.publicId= data.public_id
-  
-      }
+      console.log({ data })
+      updatedUserData.imageUrl = data.url,
+        updatedUserData.publicId = data.public_id
+
+    }
     const updatedUser = await User.findOneAndUpdate({ _id: req.params.user_id }, updatedUserData, { new: true });
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -228,16 +228,41 @@ router.post("/singleVisaUpload/:user_id", auth, upload.fields([{ name: 'singleVi
 
     };
     if (file?.singleVisaApplyAdharFront) {
+      if (process.env.NODE_ENV === "development") {
 
-      updatedUserData['singleVisaApplyAdharFront'] = url + '/public/' + file?.singleVisaApplyAdharFront[0]?.filename;
+        updatedUserData['singleVisaApplyAdharFront'] = url + '/public/' + file?.singleVisaApplyAdharFront[0]?.filename;
+      } else {
+        const data = await uploadToCloudinary(file?.singleVisaApplyAdharFront[0].path, "singleVisaApplyAdharFront");
+
+        updatedUserData.singleVisaApplyAdharFront = data.url;
+
+      }
     }
     if (file?.singleVisaApplyDocument) {
 
       updatedUserData['singleVisaApplyDocument'] = url + '/public/' + file?.singleVisaApplyDocument[0]?.filename;
+      if (process.env.NODE_ENV === "development") {
+
+        updatedUserData['singleVisaApplyDocument'] = url + '/public/' + file?.singleVisaApplyDocument[0]?.filename;
+
+      } else {
+        const data = await uploadToCloudinary(file?.singleVisaApplyDocument[0].path, "singleVisaApplyDocument");
+
+        updatedUserData.singleVisaApplyDocument = data.url;
+
+      }
     }
     if (file?.singleVisaApplyAdharBack) {
 
-      updatedUserData['singleVisaApplyAdharBack'] = url + '/public/' + file?.singleVisaApplyAdharBack[0]?.filename;
+      if (process.env.NODE_ENV === "development") {
+
+        updatedUserData['singleVisaApplyAdharBack'] = url + '/public/' + file?.singleVisaApplyAdharBack[0]?.filename;
+      } else {
+        const data = await uploadToCloudinary(file?.singleVisaApplyAdharBack[0].path, "singleVisaApplyAdharBack");
+
+        updatedUserData.singleVisaApplyAdharBack = data.url;
+
+      }
     }
     const getId = await Document.findOne({
       user_id: req.params.user_id ?? req.query.user_id,
@@ -397,7 +422,7 @@ router.post("/groupVisaUpload/:user_id", auth, handleFiles, async (req, res) => 
 router.get("/groupVisaUpload/:user_id", auth, async (req, res) => {
   try {
     const user = await Document.findOne({
-      user_id: req.query.user_id??req.params.user_id ,
+      user_id: req.query.user_id ?? req.params.user_id,
     });
     if (user) {
 
