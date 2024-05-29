@@ -81,7 +81,15 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-
+  imageUrl:{
+    type: String,
+    default: ""
+  },
+  publicId:{
+    type: String,
+    default: ""
+  },
+  
 });
 
 // Export the User model

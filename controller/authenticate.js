@@ -8,7 +8,8 @@ const User = require("../models/userModel");
 const auth = require("../utils/auth");
 const upload = require("../utils/multer");
 const Admin = require("../models/adminModel");
-const Document = require('../models/documentUploadModel')
+const Document = require('../models/documentUploadModel');
+const { uploadToCloudinary } = require("../services/cloudinary");
 // execute database connection
 dbConnect();
 //register User
@@ -182,6 +183,14 @@ router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async 
       updatedUserData.profilePicture = url + '/public/' + req.file?.filename,
         updatedUserData.profileFileName = req?.file?.originalname
     }
+    if (req.file?.filename) {
+
+      const data = await uploadToCloudinary(req.file.path, "profilePicture");
+      console.log({data})
+      updatedUserData.imageUrl= data.url,
+      updatedUserData.publicId= data.public_id
+  
+      }
     const updatedUser = await User.findOneAndUpdate({ _id: req.params.user_id }, updatedUserData, { new: true });
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -191,7 +200,7 @@ router.put("/getProfile/:user_id", auth, upload.single('profilePicture'), async 
     res.status(200).json({ message: 'User updated successfully', user: { ...rest, fileName: req.file?.originalname } });
   } catch (error) {
     console.error('Error updating user:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: error });
   }
 });
 
